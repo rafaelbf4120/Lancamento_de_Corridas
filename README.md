@@ -543,9 +543,9 @@ uppercase tracking-wider">Destino(s)</th>
 uppercase tracking-wider">Partida</th>
                             <th class="px-6 py-3 text-left 
                                 text-xs font-medium text-gray-500 
-uppercase tracking-wider">Valor</th>
+uppercase tracking-wider">Valor Total</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 
-uppercase tracking-wider">Valor Extra</th>
+uppercase tracking-wider">Valor Extra Total</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 
 uppercase tracking-wider">Observação</th>
                        
@@ -1679,7 +1679,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             // --- Lógica de Geração de Cabeçalhos Dinâmicos ---
             let maxSolicitantes = 1;
             let maxPassageiros = 1;
-            let maxDestinos = 1; // Para o detalhado, precisamos saber o máximo de destinos para alinhar o valor
+            let maxDestinos = 1; 
 
             dataToDownload.forEach(item => {
                 const currentSolicitantes = 1 + (item.solicitantes_extras ? item.solicitantes_extras.length : 0);
@@ -1752,6 +1752,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                     // O Valor Extra 'i' (Valor P(i+1)) está no índice 'i' de 'destinosValores'
                     // Se o lançamento tiver 4 destinos, só teremos 3 valores extras (P2, P3, P4)
                     const valorExtraObj = destinosValores[i] || { valor: 0, valorExtra: 0 };
+                    // Correção: Para CSV, o Valor Extra 1, 2, 3 deve ser o valor total do item extra (Destino/Valor P2, P3, P4)
                     const valorP_n = (valorExtraObj.valor || 0).toFixed(2).replace('.', ',');
                     
                     extraData.push(
@@ -1870,8 +1871,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                     
                     // O Valor Extra 'i' (Valor P(i+1)) está no índice 'i' de 'destinosValores'
                     const valorExtraObj = destinosValores[i] || { valor: 0, valorExtra: 0 };
-                    // Seu pedido usa VALOR EXTRA 1, VALOR EXTRA 2, etc. que, na estrutura do Firestore,
-                    // são os valores do destino P2, P3, etc.
+                    // Correção: O VALOR EXTRA i é o 'valor' do destino P(i+1), que está no índice 'i' do array.
                     const valorP_n = (valorExtraObj.valor || 0).toFixed(2).replace('.', ',');
                     
                     extraData.push(
@@ -1928,6 +1928,28 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             return result;
         }
 
+        // NOVO CÁLCULO DE VALOR TOTAL
+        function calculateTotalValue(lancamento) {
+            let total = lancamento.valor || 0;
+            if (lancamento.destinos_extras && lancamento.destinos_extras.length > 0) {
+                lancamento.destinos_extras.forEach(dest => {
+                    total += dest.valor || 0;
+                });
+            }
+            return total;
+        }
+
+        // NOVO CÁLCULO DE VALOR EXTRA TOTAL
+        function calculateTotalExtraValue(lancamento) {
+            let total = lancamento.valorExtra || 0;
+            if (lancamento.destinos_extras && lancamento.destinos_extras.length > 0) {
+                lancamento.destinos_extras.forEach(dest => {
+                    total += dest.valorExtra || 0;
+                });
+            }
+            return total;
+        }
+        // FIM NOVOS CÁLCULOS
 
         function renderLancamentosList() {
             const modal = document.getElementById('lancamentos-modal');
@@ -1972,7 +1994,11 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             dataToShow.forEach(item => {
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
-
+                
+                // CALCULA O VALOR TOTAL E VALOR EXTRA TOTAL
+                const totalValue = calculateTotalValue(item);
+                const totalExtraValue = calculateTotalExtraValue(item);
+                
                 const transportadoFull = formatMultipleValues(item.transportado, item.passageiros_extras, true);
                 const solicitanteFull = formatMultipleValues(item.solicitante, item.solicitantes_extras, false);
      
@@ -1993,8 +2019,8 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${destinoFull}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.partida ||
                         ''}</td>
-                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">R$ ${(item.valor || 0).toFixed(2).replace('.', ',')}</td>
-                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">R$ ${(item.valorExtra || 0).toFixed(2).replace('.', ',')}</td>
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">R$ ${totalValue.toFixed(2).replace('.', ',')}</td>
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">R$ ${totalExtraValue.toFixed(2).replace('.', ',')}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.observacao ||
                         ''}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${statusText}</td>
