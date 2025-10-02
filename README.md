@@ -252,20 +252,19 @@ bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 focus:ou
 
                 </div>
             </div>
-            <button type="button" id="download-csv" class="w-full px-6 py-3 bg-green-600 text-white font-bold 
-                    rounded-lg shadow-lg hover:bg-green-700 focus:outline-none focus:ring-4
-focus:ring-green-500 focus:ring-opacity-50 transition duration-150 ease-in-out">
-
-                Baixar Relatório CSV (Detalhado)
-
-            </button>
-            <button type="button" id="download-csv-custom" class="w-full px-6 py-3 bg-red-600 text-white font-bold 
-                    rounded-lg shadow-lg hover:bg-red-700 focus:outline-none focus:ring-4
-focus:ring-red-500 focus:ring-opacity-50 transition duration-150 ease-in-out">
-
-                Baixar Relatório CSV (Simples)
-
-            </button>
+            
+            <div class="flex flex-col md:flex-row gap-4">
+                <button type="button" id="download-csv" class="flex-1 px-6 py-3 bg-lime-500 text-white font-bold 
+                        rounded-lg shadow-lg hover:bg-lime-600 focus:outline-none focus:ring-4
+focus:ring-lime-400 focus:ring-opacity-50 transition duration-150 ease-in-out">
+                    Baixar Relatório CSV (Detalhado)
+                </button>
+                <button type="button" id="download-csv-custom" class="flex-1 px-6 py-3 bg-cyan-500 text-white font-bold 
+                        rounded-lg shadow-lg hover:bg-cyan-600 focus:outline-none focus:ring-4
+focus:ring-cyan-400 focus:ring-opacity-50 transition duration-150 ease-in-out">
+                    Baixar Relatório CSV (Simples)
+                </button>
+            </div>
             </div>
 
         <hr class="my-6 md:my-8 border-gray-300">
@@ -786,7 +785,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
         const passageirosContainer = document.getElementById('passageiros-campos-container');
         const addPassageiroBtn = document.getElementById('add-passageiro-btn');
         const downloadCsvBtn = document.getElementById('download-csv');
-        const downloadCsvCustomBtn = document.getElementById('download-csv-custom'); // NOVO BOTÃO DE CSV PERSONALIZADO
+        const downloadCsvCustomBtn = document.getElementById('download-csv-custom'); 
         const csvReportDiv = downloadCsvBtn.closest('.flex-col');
         // A div que contém o título e os campos de CSV
 
@@ -1680,97 +1679,91 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             // --- Lógica de Geração de Cabeçalhos Dinâmicos ---
             let maxSolicitantes = 1;
             let maxPassageiros = 1;
-            let maxDestinos = 1;
+            let maxDestinos = 1; // Para o detalhado, precisamos saber o máximo de destinos para alinhar o valor
 
             dataToDownload.forEach(item => {
                 const currentSolicitantes = 1 + (item.solicitantes_extras ? item.solicitantes_extras.length : 0);
                 const currentPassageiros = 1 + (item.passageiros_extras ? item.passageiros_extras.length : 0);
-                // A contagem de destinos deve incluir o principal e os extras
-             
                 const currentDestinos = 1 + (item.destinos_extras ? item.destinos_extras.length : 0);
 
                 if (currentSolicitantes > maxSolicitantes) maxSolicitantes = currentSolicitantes;
                 if (currentPassageiros > maxPassageiros) maxPassageiros = currentPassageiros;
                 if (currentDestinos > maxDestinos) maxDestinos = currentDestinos;
             });
-            // 1. Cabeçalhos Fixos (P1)
+            
+            // Limitamos a 3 extras para a lógica do seu pedido (Total de P4)
+            const maxExtras = 3; 
+
+            // 1. Cabeçalhos Fixos (P1) - Detalhado
+            // NOVA ORDEM: DATA MOTORISTA SOLICITANTE PASSAGEIRO VALOR ORIGEM PARTIDA DESTINO CHEGADA
             const csvHeaders = [
-                'Data', 'Motorista', 'Partida', 'Origem',
-                'Solicitante P1',
-                'Transportado P1',
-                'Destino P1', 'Chegada P1',
-         
-                'Valor P1', 'Valor Extra P1',
-                'Observação'
+                'DATA', 'MOTORISTA', 'SOLICITANTE P1', 'PASSAGEIRO P1', 'VALOR P1', 'ORIGEM', 'PARTIDA', 'DESTINO P1', 'CHEGADA P1',
             ];
-            // 2. Cabeçalhos Dinâmicos (Extras) - Matrícula e Valor Extra P1 estão inclusos em P1
+
+            // 2. Cabeçalhos Dinâmicos (Extras) - Detalhado
+            // EXTRAS: SOLICITANTE EXTRA i, PASSAGEIRO EXTRA i, VALOR EXTRA i
             const extraHeaders = [];
-            for (let i = 1; i < maxSolicitantes; i++) {
-                extraHeaders.push(`Solicitante Extra ${i}`);
+            for (let i = 1; i <= maxExtras; i++) {
+                extraHeaders.push(
+                    `SOLICITANTE EXTRA ${i}`, 
+                    `PASSAGEIRO EXTRA ${i}`,
+                    `VALOR EXTRA ${i}`
+                );
             }
-            for (let i = 1; i < maxPassageiros; i++) {
-                extraHeaders.push(`Transportado Extra ${i}`);
-            }
-            for (let i = 1; i < maxDestinos; i++) {
-                extraHeaders.push(`Destino Extra ${i}`);
-                extraHeaders.push(`Chegada Extra ${i}`);
-                extraHeaders.push(`Valor P${i + 1}`);
-                extraHeaders.push(`Valor Extra P${i + 1}`);
-            }
+            
+            // Adiciona a OBSERVAÇÃO ao final
+            extraHeaders.push('OBSERVAÇÃO');
 
             const finalHeaders = [...csvHeaders, ...extraHeaders];
+
             // --- Mapeamento de Dados ---
             const rows = dataToDownload.map(obj => {
+                
+                // Prepara os dados de Solicitantes, Passageiros e Destinos/Valores
+                const solicitantes = [obj.solicitante || '', ...(obj.solicitantes_extras || [])];
+                const passageiros = [{ nome: obj.transportado || '' }, ...(obj.passageiros_extras || [])];
+                const destinosValores = [{
+                    destino: obj.destino || '',
+                    chegada: obj.chegada_destino || '',
+                    valor: obj.valor || 0,
+                    valorExtra: obj.valorExtra || 0,
+                }, ...(obj.destinos_extras || [])];
+                
+                // Mapeamento dos campos principais
                 const rowData = [
                     obj.data || '',
                     obj.motorista || '',
-               
-                    obj.partida || '',
-                    obj.origem || '',
-
-                    obj.solicitante || '', // Solicitante P1
-
-                    obj.transportado || '', // Transportado P1
-
-                    obj.destino 
-                        || '', // Destino P1
-                    obj.chegada_destino || '', // Chegada P1
-
-                    (obj.valor || 0).toFixed(2).replace('.', ','), // Valor P1
-                    (obj.valorExtra || 0).toFixed(2).replace('.', ','), // Valor Extra P1
-
-                  
-                    obj.observacao || ''
+                    solicitantes[0] || '', // SOLICITANTE P1
+                    passageiros[0].nome || '', // PASSAGEIRO P1
+                    (destinosValores[0].valor || 0).toFixed(2).replace('.', ','), // VALOR P1
+                    obj.origem || '', // ORIGEM
+                    obj.partida || '', // PARTIDA
+                    destinosValores[0].destino || '', // DESTINO P1
+                    destinosValores[0].chegada || '', // CHEGADA P1
                 ];
 
                 const extraData = [];
 
-                // Solicitantes Extras
-                const solicitantesExtras = obj.solicitantes_extras || [];
-                for (let i = 0; i 
-                    < maxSolicitantes - 1; i++) {
-                    extraData.push(solicitantesExtras[i] ||
-                        '');
+                // Extras: limitados a 3 grupos
+                for (let i = 1; i <= maxExtras; i++) {
+                    const solicitanteExtra = solicitantes[i] || ''; 
+                    const passageiroExtraNome = (passageiros[i] && passageiros[i].nome) ? passageiros[i].nome : '';
+                    
+                    // O Valor Extra 'i' (Valor P(i+1)) está no índice 'i' de 'destinosValores'
+                    // Se o lançamento tiver 4 destinos, só teremos 3 valores extras (P2, P3, P4)
+                    const valorExtraObj = destinosValores[i] || { valor: 0, valorExtra: 0 };
+                    const valorP_n = (valorExtraObj.valor || 0).toFixed(2).replace('.', ',');
+                    
+                    extraData.push(
+                        solicitanteExtra, // SOLICITANTE EXTRA i (P2, P3, P4)
+                        passageiroExtraNome, // PASSAGEIRO EXTRA i (P2, P3, P4)
+                        valorP_n // VALOR EXTRA i (Valor do Destino P(i+1))
+                    );
                 }
+                
+                // OBSERVAÇÃO ao final
+                extraData.push(obj.observacao || '');
 
-                // Passageiros Extras
-                const passageirosExtras = obj.passageiros_extras ||
-                    [];
-                for (let i = 0; i < maxPassageiros - 1; i++) {
-                    const p = passageirosExtras[i];
-                    extraData.push(p ? p.nome : '');
-                }
-
-                // Destinos/Valores Extras
-                const destinosExtras = obj.destinos_extras ||
-                    [];
-                for (let i = 0; i < maxDestinos - 1; i++) {
-                    const d = destinosExtras[i];
-                    extraData.push(d ? d.destino : '');
-                    extraData.push(d ? d.chegada : '');
-                    extraData.push(d ? (d.valor || 0).toFixed(2).replace('.', ',') : '');
-                    extraData.push(d ? (d.valorExtra || 0).toFixed(2).replace('.', ',') : '');
-                }
 
                 // Combina dados e garante que estejam em aspas duplas e escapados
                 return [...rowData, ...extraData].map(value => `"${String(value).replace(/"/g, '""')}"`).join(';');
@@ -1791,7 +1784,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
         });
 
         // =========================================================================
-        // NOVO CÓDIGO: FUNÇÃO DE DOWNLOAD CSV PERSONALIZADA
+        // NOVO CÓDIGO: FUNÇÃO DE DOWNLOAD CSV PERSONALIZADA (RELATÓRIO SIMPLES)
         // =========================================================================
         document.getElementById('download-csv-custom').addEventListener('click', async function () {
             const startDate = document.getElementById('start-date').value;
@@ -1827,70 +1820,64 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             }
 
             const bom = '\uFEFF';
-            const maxExtras = 3; // O seu pedido foi até o Extra 3 (P4)
+            const maxExtras = 3; 
 
-            // Cabeçalhos (P1)
+            // Cabeçalhos (P1) - Simples
+            // NOVA ORDEM: DATA SOLICITANTE PASSAGEIRO VALOR
             const csvHeaders = [
-                'DATA', 'SOLICITANTE P1', 'PASSAGEIRO P1', 'VALOR P1',
+                'DATA', 'SOLICITANTE P1', 'PASSAGEIRO P1', 'VALOR P1'
             ];
 
-            // Cabeçalhos Dinâmicos (Extras) - limitados a 3 grupos de extras
+            // Cabeçalhos Dinâmicos (Extras) - Simples
+            // EXTRAS: SOLICITANTE EXTRA i, PASSAGEIRO EXTRA i, VALOR EXTRA i
             const extraHeaders = [];
             for (let i = 1; i <= maxExtras; i++) {
-                extraHeaders.push(`SOLICITANTE EXTRA ${i}`, `PASSAGEIRO EXTRA ${i}`, `VALOR EXTRA ${i}`);
+                extraHeaders.push(
+                    `SOLICITANTE EXTRA ${i}`, 
+                    `PASSAGEIRO EXTRA ${i}`,
+                    `VALOR EXTRA ${i}`
+                );
             }
 
             const finalHeaders = [...csvHeaders, ...extraHeaders];
 
             // --- Mapeamento de Dados ---
             const rows = dataToDownload.map(obj => {
-                // Prepara os dados de Solicitantes, Passageiros, Destinos e Valores
+                
+                // Prepara os dados de Solicitantes, Passageiros e Destinos/Valores
                 const solicitantes = [obj.solicitante || '', ...(obj.solicitantes_extras || [])];
                 const passageiros = [{ nome: obj.transportado || '' }, ...(obj.passageiros_extras || [])];
-                // Destinos e Valores são aninhados nos destinos_extras
+                // O valor P1 e valores extras são mapeados a partir de destinosValores
                 const destinosValores = [{
-                    destino: obj.destino || '',
-                    origem: obj.origem || '',
                     valor: obj.valor || 0,
                     valorExtra: obj.valorExtra || 0,
-                    chegada_destino: obj.chegada_destino || '', // Incluído para Destino P1
-                    partida: obj.partida || '' // Incluído para Origem P1
                 }, ...(obj.destinos_extras || [])];
-
+                
+                // Mapeamento dos campos principais
                 const rowData = [
                     obj.data || '',
                     solicitantes[0] || '', // SOLICITANTE P1
                     passageiros[0].nome || '', // PASSAGEIRO P1
-                    (destinosValores[0].valor || 0).toFixed(2).replace('.', ','), // VALOR P1
-                    destinosValores[0].origem || '', // ORIGEM P1 (O campo 'origem' é um só)
-                    destinosValores[0].destino || '' // DESTINO P1
+                    (destinosValores[0].valor || 0).toFixed(2).replace('.', ',') // VALOR P1
                 ];
 
                 const extraData = [];
 
                 // Extras: limitados a 3 grupos
                 for (let i = 1; i <= maxExtras; i++) {
-                    // O solicitante extra 'i' está no índice 'i' do array 'solicitantes'
                     const solicitanteExtra = solicitantes[i] || ''; 
-                    
-                    // O passageiro extra 'i' está no índice 'i' do array 'passageiros'
                     const passageiroExtraNome = (passageiros[i] && passageiros[i].nome) ? passageiros[i].nome : '';
                     
-                    // O destino extra 'i' está no array 'destinos_extras' ou no índice 'i' de 'destinosValores'
-                    // A Origem P2, P3, P4 será sempre a Destino P1, P2, P3... mas o seu pedido pede uma 'Origem Extra 1'
-                    // Vamos assumir que 'Origem Extra 1' é o DESTINO P1, 'Origem Extra 2' é o DESTINO P2, etc.
                     // O Valor Extra 'i' (Valor P(i+1)) está no índice 'i' de 'destinosValores'
-                    const destinoValorObj = destinosValores[i] || { destino: '', origem: '', valor: 0, valorExtra: 0 };
-                    
-                    // A Origem Extra 1 (P2) é o Destino P1. A Origem Extra 2 (P3) é o Destino P2.
-                    const origemExtra = (destinosValores[i-1] && i > 0) ? destinosValores[i-1].destino : '';
+                    const valorExtraObj = destinosValores[i] || { valor: 0, valorExtra: 0 };
+                    // Seu pedido usa VALOR EXTRA 1, VALOR EXTRA 2, etc. que, na estrutura do Firestore,
+                    // são os valores do destino P2, P3, etc.
+                    const valorP_n = (valorExtraObj.valor || 0).toFixed(2).replace('.', ',');
                     
                     extraData.push(
                         solicitanteExtra, // SOLICITANTE EXTRA i
                         passageiroExtraNome, // PASSAGEIRO EXTRA i
-                        (destinoValorObj.valor || 0).toFixed(2).replace('.', ','), // VALOR EXTRA i (Valor P(i+1))
-                        origemExtra, // ORIGEM EXTRA i (Destino P(i-1))
-                        destinoValorObj.destino // DESTINO EXTRA i (Destino P(i))
+                        valorP_n // VALOR EXTRA i (Valor do Destino P(i+1))
                     );
                 }
 
@@ -1910,7 +1897,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
         });
 
         // =========================================================================
-        // FIM NOVO CÓDIGO: FUNÇÃO DE DOWNLOAD CSV PERSONALIZADA
+        // FIM NOVO CÓDIGO: FUNÇÃO DE DOWNLOAD CSV PERSONALIZADA (RELATÓRIO SIMPLES)
         // =========================================================================
 
         // --- LÓGICA DO MODAL DE LANÇAMENTOS ---
