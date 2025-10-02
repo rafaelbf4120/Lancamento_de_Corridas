@@ -1831,13 +1831,13 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
 
             // Cabeçalhos (P1)
             const csvHeaders = [
-                'DATA', 'SOLICITANTE P1', 'PASSAGEIRO P1', 'VALOR P1', 'ORIGEM P1', 'DESTINO P1'
+                'DATA', 'SOLICITANTE P1', 'PASSAGEIRO P1', 'VALOR P1',
             ];
 
             // Cabeçalhos Dinâmicos (Extras) - limitados a 3 grupos de extras
             const extraHeaders = [];
             for (let i = 1; i <= maxExtras; i++) {
-                extraHeaders.push(`SOLICITANTE EXTRA ${i}`, `PASSAGEIRO EXTRA ${i}`, `VALOR EXTRA ${i}`, `ORIGEM EXTRA ${i}`, `DESTINO EXTRA ${i}`);
+                extraHeaders.push(`SOLICITANTE EXTRA ${i}`, `PASSAGEIRO EXTRA ${i}`, `VALOR EXTRA ${i}`);
             }
 
             const finalHeaders = [...csvHeaders, ...extraHeaders];
