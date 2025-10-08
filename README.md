@@ -156,6 +156,13 @@ border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-
 
             <div class="form-row-align">
                 <div class="flex-grow">
+                    <label for="bordero" class="block text-sm font-medium text-gray-700">Nº Borderô:</label>
+                    <input type="text" id="bordero" name="bordero"
+                        class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                </div>
+            </div>
+            <div class="form-row-align">
+                <div class="flex-grow">
 
                     <label for="origem" class="block text-sm font-medium text-gray-700">Origem:</label>
                     <input type="text" id="origem" name="origem" onfocus="this.classList.remove('error-border')" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition 
@@ -172,9 +179,6 @@ duration-150 ease-in-out">
 
                 </div>
             </div>
-
-            <div></div>
-
 
             <div id="destino-campos-container-wrapper" class="md:col-span-2 space-y-4">
                 <div id="destino-campos-container" class="grid grid-cols-1 gap-4 md:gap-6">
@@ -525,7 +529,8 @@ uppercase tracking-wider hidden">ID</th>
 uppercase tracking-wider">Data</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 
 uppercase tracking-wider">Motorista</th>
-
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 
+uppercase tracking-wider">Nº Borderô</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 
 uppercase tracking-wider">Solicitante(s)</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 
@@ -598,6 +603,14 @@ font-medium text-gray-700">Data:</label>
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-bordero" class="block text-sm font-medium text-gray-700">Nº Borderô:</label>
+                        <input type="text" id="edit-bordero"
+                            class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                    </div>
+                    <div></div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div></div>
 
@@ -828,17 +841,13 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 userData.userId : null;
             userIdDisplay.innerText = `ID do Usuário: ${globalUserId}`;
 
-            // ================== INÍCIO DA CORREÇÃO ==================
             // A seção de CSV agora é sempre visível para todos os usuários.
             csvReportDiv.classList.remove('hidden');
-            // =================== FIM DA CORREÇÃO ====================
 
             if (userData && userData.is_admin) {
                 openMotoristasBtn.classList.remove('hidden');
-                // A linha que mostrava o csvReportDiv foi movida para cima para valer para todos.
             } else {
                 openMotoristasBtn.classList.add('hidden');
-                // A linha que escondia o csvReportDiv foi removida.
             }
 
             if (userData && userData.is_motorista_fixo) {
@@ -1456,12 +1465,10 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             // Validação de campos obrigatórios (motorista, data, etc.)
             requiredFields.forEach(field => {
                 const input = form[field];
-                if
-                    (input.value.trim() === '') {
-
+                if (input && input.value.trim() === '') {
                     isFormValid = false;
                     input.classList.add('error-border');
-                } else {
+                } else if (input) {
                     input.classList.remove('error-border');
                 }
             });
@@ -1589,6 +1596,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 userId: globalUserId,
                 createdBy: currentUser.username,
                 motorista: form['motorista'].value,
+                bordero: form['bordero'].value.trim(),
 
                 matricula: passageirosData[0].matricula,
                 transportado:
@@ -1624,15 +1632,13 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             addDynamicRow('solicitante-campos-container', 'solicitante', 'Solicitante', true);
             destinoContainer.innerHTML = '';
             valorContainer.innerHTML = '';
+            passageirosContainer.innerHTML = '';
             // Limpa e reinicia o container de valor
             addDynamicRow('destino-campos-container', 'destino', 'Destino', true);
             addDynamicRow('valor-campos-container', 'valor', 'Valor', true); // Adiciona valor P1
             addPassageiroRow(true);
         });
 
-        // =========================================================================
-        // INÍCIO DO CÓDIGO CORRIGIDO - RELATÓRIO DETALHADO
-        // =========================================================================
         document.getElementById('download-csv').addEventListener('click', async function () {
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
@@ -1671,7 +1677,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             // --- CABEÇALHOS CORRIGIDOS ---
             // 1. Cabeçalhos Fixos (P1)
             const csvHeaders = [
-                'DATA', 'MOTORISTA', 'SOLICITANTE P1', 'PASSAGEIRO P1',
+                'DATA', 'MOTORISTA', 'Nº BORDERÔ', 'SOLICITANTE P1', 'PASSAGEIRO P1',
                 'VALOR NORMAL P1', 'VALOR EXTRA P1', // Alterado aqui
                 'ORIGEM', 'PARTIDA', 'DESTINO P1', 'CHEGADA P1',
             ];
@@ -1704,6 +1710,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 const rowData = [
                     obj.data || '',
                     obj.motorista || '',
+                    obj.bordero || '',
                     solicitantes[0] || '',
                     passageiros[0].nome || '',
                     // Corrigido para puxar VALOR NORMAL e VALOR EXTRA de P1
@@ -1751,14 +1758,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             link.click();
             document.body.removeChild(link);
         });
-        // =========================================================================
-        // FIM DO CÓDIGO CORRIGIDO - RELATÓRIO DETALHADO
-        // =========================================================================
 
-
-        // =========================================================================
-        // INÍCIO DO CÓDIGO CORRIGIDO - RELATÓRIO SIMPLES
-        // =========================================================================
         document.getElementById('download-csv-custom').addEventListener('click', async function () {
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
@@ -1864,9 +1864,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             link.click();
             document.body.removeChild(link);
         });
-        // =========================================================================
-        // FIM DO CÓDIGO CORRIGIDO - RELATÓRIO SIMPLES
-        // =========================================================================
 
         // --- LÓGICA DO MODAL DE LANÇAMENTOS ---
 
@@ -1896,7 +1893,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             return result;
         }
 
-        // NOVO CÁLCULO DE VALOR TOTAL
         function calculateTotalValue(lancamento) {
             let total = lancamento.valor || 0;
             if (lancamento.destinos_extras && lancamento.destinos_extras.length > 0) {
@@ -1907,7 +1903,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             return total;
         }
 
-        // NOVO CÁLCULO DE VALOR EXTRA TOTAL
         function calculateTotalExtraValue(lancamento) {
             let total = lancamento.valorExtra || 0;
             if (lancamento.destinos_extras && lancamento.destinos_extras.length > 0) {
@@ -1917,30 +1912,25 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             }
             return total;
         }
-        // FIM NOVOS CÁLCULOS
 
         function renderLancamentosList() {
             const modal = document.getElementById('lancamentos-modal');
             const tableBody = document.querySelector('#lancamentos-table tbody');
             tableBody.innerHTML = '';
 
-            // Acessa os campos de filtro dentro do modal
             const startDate = modal.querySelector('#filter-start-date').value;
             const endDate = modal.querySelector('#filter-end-date').value;
 
             let dataToShow = lancamentosData;
 
-            // Filtra por usuário se não for admin, ele vê os próprios lançamentos (userId)
             if (!currentUser.isAdmin) {
-                // A chave userId é o ID do usuário que FEZ o lançamento.
                 dataToShow = lancamentosData.filter(lanc => lanc.userId === globalUserId);
             }
 
             if (startDate || endDate) {
                 dataToShow = dataToShow.filter(item => {
                     if (!item.data) return false;
-                    const itemDate = new Date(item.data + "T00:00:00"); // Treat date as local timezone
-
+                    const itemDate = new Date(item.data + "T00:00:00");
 
                     const start = startDate ? new Date(startDate + "T00:00:00") : null;
                     const end = endDate ? new Date(endDate + "T00:00:00") : null;
@@ -1955,7 +1945,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
 
             dataToShow.sort((a, b) => new Date(b.data) - new Date(a.data));
             if (dataToShow.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="13" class="text-center p-4">Nenhum lançamento encontrado.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="14" class="text-center p-4">Nenhum lançamento encontrado.</td></tr>';
                 return;
             }
 
@@ -1963,7 +1953,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
 
-                // CALCULA O VALOR TOTAL E VALOR EXTRA TOTAL
                 const totalValue = calculateTotalValue(item);
                 const totalExtraValue = calculateTotalExtraValue(item);
 
@@ -1978,19 +1967,16 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden">${item.id || ''}</td>
             
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.data || ''}</td>
-                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.motorista ||
-                    ''}</td>
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.motorista || ''}</td>
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.bordero || ''}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${solicitanteFull}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transportadoFull}</td>
-                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.origem ||
-                    ''}</td>
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.origem || ''}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${destinoFull}</td>
-                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.partida ||
-                    ''}</td>
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.partida || ''}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">R$ ${totalValue.toFixed(2).replace('.', ',')}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">R$ ${totalExtraValue.toFixed(2).replace('.', ',')}</td>
-                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.observacao ||
-                    ''}</td>
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.observacao || ''}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${statusText}</td>
                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <button data-id="${item.id}" class="edit-lancamento-btn text-blue-600 hover:text-blue-900">
@@ -2011,7 +1997,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             document.getElementById('lancamentos-modal').classList.remove('hidden');
 
         });
-        // CORREÇÃO: Função de fechar o modal de gerenciamento de lançamentos.
         document.getElementById('close-lancamentos-modal').addEventListener('click', () => {
             document.getElementById('lancamentos-modal').classList.add('hidden');
         });
@@ -2367,14 +2352,11 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
 
             document.getElementById('edit-lancamento-id').value = id;
             document.getElementById('edit-data').value = lancamento.data;
+            document.getElementById('edit-bordero').value = lancamento.bordero || '';
             document.getElementById('edit-origem').value = lancamento.origem;
             document.getElementById('edit-observacao').value = lancamento.observacao || '';
-            // Adicionado campo Partida de Edição
-            document.getElementById('edit-partida').value = lancamento.partida ||
-                '';
+            document.getElementById('edit-partida').value = lancamento.partida || '';
 
-
-            // --- Motorista (read-only se não for admin) ---
             const motoristaInput = document.getElementById('edit-motorista');
             motoristaInput.value = lancamento.motorista;
             if (!currentUser.isAdmin) {
@@ -2385,20 +2367,17 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 motoristaInput.classList.remove('bg-gray-200');
             }
 
-            // --- Solicitantes (Dinâmico) ---
             const editSolicitanteContainer = document.getElementById('edit-solicitante-campos-container');
             editSolicitanteContainer.innerHTML = '';
 
-            // Solicitante Principal (P1)
             addEditDynamicRow('edit-solicitante-campos-container', 'solicitante', 'Solicitante', lancamento.solicitante || '');
-            // Solicitantes Extras
             if (lancamento.solicitantes_extras && lancamento.solicitantes_extras.length > 0) {
                 lancamento.solicitantes_extras.forEach((s) => {
                     addEditDynamicRow('edit-solicitante-campos-container', 'solicitante', 'Solicitante', s);
                 });
             }
             updateEditDynamicLabels('edit-solicitante-campos-container', 'solicitante', 'Solicitante');
-            // --- Destinos/Chegadas (Dinâmico) ---
+
             const editDestinoContainer = document.getElementById('edit-destino-campos-container');
             editDestinoContainer.innerHTML = '';
 
@@ -2408,35 +2387,27 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             }
 
             destinosParaEdicao.forEach(d => {
-                // Ao adicionar o destino, o valor correspondente é criado automaticamente
                 addEditDynamicRow('edit-destino-campos-container', 'destino', 'Destino', d.destino, d.chegada);
             });
-            // --- Valores (Dinâmico) ---
+
             const editValorContainer = document.getElementById('edit-valor-campos-container');
             editValorContainer.innerHTML = '';
 
             const valoresParaEdicao = [{ valor: lancamento.valor || 0, valorExtra: lancamento.valorExtra || 0 }];
             if (lancamento.destinos_extras && lancamento.destinos_extras.length > 0) {
-                // Adiciona os valores extras (Valor e Valor Extra) do array destinos_extras
                 lancamento.destinos_extras.forEach(d => valoresParaEdicao.push({ valor: d.valor || 0, valorExtra: d.valorExtra || 0 }));
             }
 
             valoresParaEdicao.forEach((v, index) => {
                 const pNum = index + 1;
-                // Formata os valores para exibição de moeda (R$ 0,00) antes de criar o input
                 const valorFmt = (v.valor || 0).toFixed(2).replace('.', ',');
-
                 const valorExtraFmt = (v.valorExtra || 0).toFixed(2).replace('.', ',');
-
                 const newRow = createEditValorInput(pNum, valorFmt, valorExtraFmt);
                 editValorContainer.appendChild(newRow);
             });
             updateEditDynamicLabels('edit-valor-campos-container', 'valor', 'Valor');
 
-
-            // --- Passageiros (Transportados) ---
-            document.getElementById('edit-matricula').value = lancamento.matricula ||
-                '';
+            document.getElementById('edit-matricula').value = lancamento.matricula || '';
             document.getElementById('edit-transportado').value = lancamento.transportado || '';
 
             const extrasContainer = document.getElementById('edit-passageiros-extras-container');
@@ -2447,7 +2418,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 });
             }
             updateEditPassageiroLabels();
-            // Garante que os rótulos estão corretos
 
             document.getElementById('edit-lancamento-modal').classList.remove('hidden');
         }
@@ -2456,32 +2426,24 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             const modal = document.getElementById('edit-lancamento-modal');
             modal.addEventListener('blur', (event) => {
                 const input = event.target;
-                // Procura pelo contêiner do passageiro P1 ou extra
-                let parentDiv = input.closest('.grid.grid-cols-1.md\\:grid-cols-2.gap-4'); // Container de P1
+                let parentDiv = input.closest('.grid.grid-cols-1.md\\:grid-cols-2.gap-4');
                 if (!parentDiv) {
-
-                    parentDiv = input.closest('.edit-passageiro-row'); // Container de extras
+                    parentDiv = input.closest('.edit-passageiro-row');
                 }
 
                 if (!parentDiv) return;
 
                 const matriculaInput = parentDiv.querySelector('input[name="edit-matriculas[]"]');
-
                 const nomeInput = parentDiv.querySelector('input[name="edit-transportados[]"]');
-
 
                 if (matriculaInput && nomeInput) {
                     if (input === matriculaInput) {
                         handleAutofillDynamic(matriculaInput, nomeInput, 'matricula');
-
                     } else if (input === nomeInput) {
-
                         handleAutofillDynamic(nomeInput, matriculaInput, 'nome');
                     }
-
                 }
             }, true);
-            // Os event listeners de moeda agora são adicionados dinamicamente em createEditValorInput/updateValueLabels
         }
         setupEditModalAutofill();
         document.getElementById('close-edit-lancamento-modal').addEventListener('click', () => {
@@ -2491,16 +2453,10 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             document.getElementById('edit-lancamento-modal').classList.add('hidden');
         });
 
-        // =========================================================================
-        // INÍCIO DO CÓDIGO DE EDIÇÃO CORRIGIDO
-        // =========================================================================
         document.getElementById('edit-lancamento-form').addEventListener('submit', async function (event) {
             event.preventDefault();
             const id = document.getElementById('edit-lancamento-id').value;
 
-            // --- LÓGICA DE COLETA E VALIDAÇÃO ---
-
-            // Coleta de Solicitantes (lógica existente, está ok)
             const solicitantesEdit = Array.from(document.querySelectorAll('#edit-solicitante-campos-container input[name="edit-solicitantes[]"]'))
                 .map(input => input.value.trim())
                 .filter(value => value !== '');
@@ -2509,7 +2465,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 return;
             }
 
-            // Coleta de Passageiros (lógica existente, está ok)
             const p1Matricula = document.getElementById('edit-matricula').value.trim();
             const p1Nome = document.getElementById('edit-transportado').value.trim();
             if (!p1Matricula || !p1Nome) {
@@ -2523,10 +2478,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 nome: nomesExtras[i]
             })).filter(p => p.matricula && p.nome);
 
-
-            // --- INÍCIO DA LÓGICA CORRIGIDA PARA DESTINOS E VALORES ---
-
-            // 1. Coletar todos os destinos e valores em arrays separados
             const destinosInputs = document.querySelectorAll('#edit-destino-campos-container input[name="edit-destinos[]"]');
             const chegadasInputs = document.querySelectorAll('#edit-destino-campos-container input[name="edit-chegadas_destino[]"]');
             const valoresInputs = document.querySelectorAll('#edit-valor-campos-container input[name="edit-valores[]"]');
@@ -2538,7 +2489,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 const destino = destinoInput.value.trim();
                 const chegada = chegadasInputs[i] ? chegadasInputs[i].value.trim() : '';
 
-                // Valida se o par destino/chegada está completo
                 if ((destino && !chegada) || (!destino && chegada)) {
                     destinoIncompleto = true;
                 }
@@ -2550,7 +2500,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 return;
             }
 
-            // Garante que o primeiro destino (P1) esteja preenchido
             if (!destinosArray[0] || !destinosArray[0].destino || !destinosArray[0].chegada) {
                 showWarning('O destino principal (P1) e sua chegada devem estar preenchidos.');
                 return;
@@ -2563,17 +2512,15 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 valoresArray.push({ valor, valorExtra });
             });
 
-            // 2. Construir o objeto de dados atualizado
             const updatedData = {
                 motorista: document.getElementById('edit-motorista').value,
                 data: document.getElementById('edit-data').value,
+                bordero: document.getElementById('edit-bordero').value.trim(),
                 partida: document.getElementById('edit-partida').value,
                 origem: document.getElementById('edit-origem').value,
                 observacao: document.getElementById('edit-observacao').value,
                 editedBy: currentUser.username,
                 editedAt: serverTimestamp(),
-
-                // Dados principais (P1)
                 solicitante: solicitantesEdit[0],
                 matricula: p1Matricula,
                 transportado: p1Nome,
@@ -2581,14 +2528,11 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 chegada_destino: destinosArray[0].chegada,
                 valor: valoresArray[0] ? valoresArray[0].valor : 0,
                 valorExtra: valoresArray[0] ? valoresArray[0].valorExtra : 0,
-
-                // Dados extras
                 solicitantes_extras: solicitantesEdit.slice(1),
                 passageiros_extras: passageirosExtras,
-                destinos_extras: [], // Recriar este array do zero
+                destinos_extras: [],
             };
 
-            // 3. Combinar os arrays de destinos e valores para criar os 'destinos_extras'
             const totalExtras = Math.max(destinosArray.length, valoresArray.length) - 1;
 
             if (totalExtras > 0) {
@@ -2596,7 +2540,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                     const destinoInfo = destinosArray[i] || { destino: '', chegada: '' };
                     const valorInfo = valoresArray[i] || { valor: 0, valorExtra: 0 };
 
-                    // Adiciona ao array de extras somente se houver alguma informação relevante
                     if (destinoInfo.destino || valorInfo.valor > 0 || valorInfo.valorExtra > 0) {
                         updatedData.destinos_extras.push({
                             destino: destinoInfo.destino,
@@ -2608,22 +2551,14 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 }
             }
 
-
-            // --- FIM DA LÓGICA CORRIGIDA ---
-
-            // 4. Salvar os dados no banco de dados
             const docRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'lancamentos', id);
             await updateDoc(docRef, updatedData);
 
             showWarning('Lançamento atualizado com sucesso!');
             document.getElementById('edit-lancamento-modal').classList.add('hidden');
-            renderLancamentosList(); // Atualiza a lista na tela
+            renderLancamentosList();
         });
-        // =========================================================================
-        // FIM DO CÓDIGO DE EDIÇÃO CORRIGIDO
-        // =========================================================================
 
-        // --- Funções CRUD e Renderização dos Modais Antigos ---
         function renderTransportadosList() {
             const tableBody = document.querySelector('#transportados-table tbody');
             tableBody.innerHTML = '';
@@ -2632,9 +2567,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 row.className = 'bg-white hover:bg-gray-50';
                 row.innerHTML = `
                     <td class="p-4"><input type="checkbox" data-id="${item.id}" class="transportado-checkbox rounded-sm"></td>
-
-      <td class="px-6 py-4">${item.matricula}</td>
-      
+                    <td class="px-6 py-4">${item.matricula}</td>
                     <td class="px-6 py-4">${item.nome}</td>
                 `;
                 tableBody.appendChild(row);
@@ -2650,10 +2583,8 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
                 row.className = 'bg-white hover:bg-gray-50';
                 row.innerHTML = `
                     <td class="p-4"><input type="checkbox" data-id="${item.id}" class="motorista-checkbox rounded-sm"></td>
-
-      <td class="px-6 py-4">${item.nome}</td>
-      
-            `;
+                    <td class="px-6 py-4">${item.nome}</td>
+                `;
                 tableBody.appendChild(row);
             });
         }
@@ -2684,24 +2615,18 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             const newMatricula = document.getElementById('new-matricula').value.trim();
             const newNome = document.getElementById('new-nome').value.trim();
             if (newMatricula && newNome) {
-
                 const existing = transportadosData.find(item => item.matricula === newMatricula ||
-
                     item.nome.toLowerCase() === newNome.toLowerCase());
                 if (existing) {
                     showWarning('Matrícula ou nome já existe.');
-
                 } else {
                     await addDoc(collection(db, 'artifacts', globalAppId, 'public', 'data', 'transportados'),
                         { matricula: newMatricula, nome: newNome });
-
                     document.getElementById('new-matricula').value = '';
                     document.getElementById('new-nome').value = '';
-
                     showWarning('Transportado adicionado.');
                 }
             } else {
-
                 showWarning('Preencha matrícula e nome.');
             }
         });
@@ -2710,9 +2635,7 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             if (checkboxes.length === 0) {
                 showWarning('Selecione ao menos um transportado.');
                 return;
-
             }
-
             const promises = Array.from(checkboxes).map(cb =>
                 deleteDoc(doc(db, 'artifacts', globalAppId, 'public', 'data', 'transportados', cb.dataset.id)));
             await Promise.all(promises);
@@ -2723,17 +2646,12 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             if (newNome) {
                 if (motoristasData.find(item => item.nome.toLowerCase() === newNome.toLowerCase())) {
                     showWarning('Motorista já existe.');
-
                 } else {
-
-
                     await addDoc(collection(db, 'artifacts', globalAppId, 'public', 'data', 'motoristas'), { nome: newNome });
                     document.getElementById('new-motorista-nome').value = '';
                     showWarning('Motorista adicionado.');
                 }
             } else {
-
-
                 showWarning('Preencha o nome do motorista.');
             }
         });
@@ -2742,7 +2660,6 @@ py-2 bg-gray-50 border border-gray-300 rounded-lg">
             if (checkboxes.length === 0) {
                 showWarning('Selecione ao menos um motorista.');
                 return;
-
             }
             const promises = Array.from(checkboxes).map(cb =>
                 deleteDoc(doc(db, 'artifacts', globalAppId, 'public', 'data', 'motoristas', cb.dataset.id)));
